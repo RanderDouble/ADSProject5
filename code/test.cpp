@@ -1,36 +1,38 @@
-#include <cstdio>
-#include <cstdlib>
-#include <ctime>
+#include <iostream>
+#include <iomanip>
+#include <chrono>
 
 // Forward declarations
 namespace Backtracking {
-    void solve(int n, int* nums);
-}
+void solve(int n, int* nums);
+} // namespace Backtracking
 namespace BitmaskDP {
-    void solve(int n, int* nums);
-}
+void solve(int n, int* nums);
+} // namespace BitmaskDP
 
 int main() {
     int n;
-    if (scanf("%d", &n) != 1) return 0;
-    
-    int* nums = (int*)malloc(n * sizeof(int));
-    for(int i=0; i<n; ++i) scanf("%d", &nums[i]);
-    
-    printf("--- Backtracking ---\n");
-    clock_t start = clock();
+    if (!(std::cin >> n))
+        return 0;
+
+    int* nums = new int[n];
+    for (int i = 0; i < n; ++i)
+        std::cin >> nums[i];
+
+    std::cout << "--- Backtracking ---" << std::endl;
+    auto start = std::chrono::high_resolution_clock::now();
     Backtracking::solve(n, nums);
-    clock_t end = clock();
-    double time_bt = (double)(end - start) / CLOCKS_PER_SEC;
-    printf("Time: %.4f s\n", time_bt);
-    
-    printf("\n--- Bitmask DP ---\n");
-    start = clock();
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_bt = end - start;
+    std::cout << "Time: " << std::fixed << std::setprecision(4) << elapsed_bt.count() << " s" << std::endl;
+
+    std::cout << "\n--- Bitmask DP ---" << std::endl;
+    start = std::chrono::high_resolution_clock::now();
     BitmaskDP::solve(n, nums);
-    end = clock();
-    double time_dp = (double)(end - start) / CLOCKS_PER_SEC;
-    printf("Time: %.4f s\n", time_dp);
-    
-    free(nums);
+    end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_dp = end - start;
+    std::cout << "Time: " << std::fixed << std::setprecision(4) << elapsed_dp.count() << " s" << std::endl;
+
+    delete[] nums;
     return 0;
 }
