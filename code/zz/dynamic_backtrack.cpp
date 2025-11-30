@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-// 三维DP解决三划分问题
 int*** createDPTable(int target, int n) {
     int*** dp = (int***)malloc((target + 1) * sizeof(int**));
     for (int i = 0; i <= target; i++) {
@@ -14,7 +13,6 @@ int*** createDPTable(int target, int n) {
     }
     return dp;
 }
-
 void freeDPTable(int*** dp, int target) {
     for (int i = 0; i <= target; i++) {
         for (int j = 0; j <= target; j++) {
@@ -24,141 +22,90 @@ void freeDPTable(int*** dp, int target) {
     }
     free(dp);
 }
-
 int threePartitionDP(int n, int* items, int*** result) {
     int total = 0;
     for (int i = 0; i < n; i++) {
         total += items[i];
     }
-    
-    // 检查基本条件
+    //前期剪枝
     if (total % 3 != 0 || n < 3) {
         return 0;
     }
-    
     int target = total / 3;
-    
-    // 检查是否有元素大于目标值
     for (int i = 0; i < n; i++) {
         if (items[i] > target) {
             return 0;
         }
     }
-    
-    // 创建DP表
     int*** dp = createDPTable(target, n);
     dp[0][0][0] = 1;
-    
-    // 填充DP表
+    // DP状态转移
+    //每次选取一个数字，必然在三个子集中挑选一个
+    //则就是dp[i-x][j][k-1] 或 dp[i][j-x][k-1] 或 dp[i][j][k-1] 三种情况之一
     for (int z = 1; z <= n; z++) {
         int item_value = items[z - 1];
-        
+        dp[0][0][z] = 1; // 初始化
         for (int x = 0; x <= target; x++) {
             int remain1 = x - item_value;
-            
             for (int y = 0; y <= target; y++) {
                 int remain2 = y - item_value;
-                
-                // Case 1: x=0, y=0
-                if (x == 0 && y == 0) {
-                    dp[0][0][z] = 1;
-                }
-                // Case 2: item_value == x
-                else if (item_value == x) {
-                    for (int i = 0; i <= target; i++) {
-                        if (dp[i][y][z - 1]) {
-                            dp[x][y][z] = 1;
-                            break;
-                        }
-                    }
-                }
-                // Case 3: item_value == y
-                else if (item_value == y) {
-                    for (int i = 0; i <= target; i++) {
-                        if (dp[x][i][z - 1]) {
-                            dp[x][y][z] = 1;
-                            break;
-                        }
-                    }
-                }
-                // Case 4: 不使用当前物品
-                else if (dp[x][y][z - 1]) {
+                // Case 1: 数字给subset3
+                 if (dp[x][y][z - 1]) {
                     dp[x][y][z] = 1;
                 }
-                // Case 5: 将当前物品给player1
+                // Case 2: 将当前数字给subset1
                 else if (remain1 >= 0 && dp[remain1][y][z - 1]) {
                     dp[x][y][z] = 1;
                 }
-                // Case 6: 将当前物品给player2
+                // Case 3: 将当前数字给subset2
                 else if (remain2 >= 0 && dp[x][remain2][z - 1]) {
                     dp[x][y][z] = 1;
                 }
             }
         }
     }
-    
-    // 检查是否存在解
+    //不存在解
     if (!dp[target][target][n]) {
         freeDPTable(dp, target);
         return 0;
     }
-    
-    // 回溯构造解
+    //回溯构造解
     int* part1 = (int*)malloc(n * sizeof(int));
     int* part2 = (int*)malloc(n * sizeof(int));
     int* part3 = (int*)malloc(n * sizeof(int));
     int count1 = 0, count2 = 0, count3 = 0;
-    
     int x = target, y = target, z = n;
-    
     while (z > 0) {
+        //每次选取最后一个数字进行判断
+        //若果dp[x][y][z-1]为真，则说明该数字未被使用，放入subset3
+        //否则判断该数字是否放入subset1或subset2
+        //若dp[x - item_value][y][z-1]==1,放入subset1，则x减少该数字值
+        //若dp[x][y - item_value][z-1]==1,放入subset2，则y减少该数字值
         int item_value = items[z - 1];
-        
+        //结束条件
         if (x == 0 && y == 0) {
             break;
         }
-        
-        // Case 1: 物品给player1
-        if (item_value == x) {
-            for (int i = 0; i <= target; i++) {
-                if (dp[i][y][z - 1]) {
-                    part1[count1++] = item_value;
-                    x = 0;
-                    z--;
-                    break;
-                }
-            }
-        }
-        // Case 2: 物品给player2
-        else if (item_value == y) {
-            for (int i = 0; i <= target; i++) {
-                if (dp[x][i][z - 1]) {
-                    part2[count2++] = item_value;
-                    y = 0;
-                    z--;
-                    break;
-                }
-            }
-        }
-        // Case 3: 不使用当前物品
-        else if (dp[x][y][z - 1]) {
+        // Case 1: 数字给subset3
+        if (dp[x][y][z - 1]) {
             part3[count3++] = item_value;
             z--;
         }
-        // Case 4: 物品给player1
+        // Case 2: 数字给subset1
         else if (item_value <= x && dp[x - item_value][y][z - 1]) {
             part1[count1++] = item_value;
             x = x - item_value;
             z--;
         }
-        // Case 5: 物品给player2
+        // Case 3: 数字给subset2
         else if (item_value <= y && dp[x][y - item_value][z - 1]) {
             part2[count2++] = item_value;
             y = y - item_value;
             z--;
         }
         else {
-            // 应该不会执行到这里
+            // 这种情况不存在
+            printf("Error in backtracking\n");
             part3[count3++] = item_value;
             z--;
         }

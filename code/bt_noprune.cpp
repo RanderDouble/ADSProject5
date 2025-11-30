@@ -6,22 +6,26 @@ namespace BacktrackingNoPrune {
 long long count = 0;
 int *numbers;
 int *bucket_id;
-int bucket_sum[3];
+int *bucket_sum;
 int target_sum;
 int n;
+int k_partitions;
 
 bool compare(int a, int b) { return a > b; }
 
 bool backtrack(int index) {
     count++;
-    if (count % 10000000 == 0) {
-        std::cout << "Searching... Steps: " << count << std::endl;
-    }
+    // Removed progress print to avoid cluttering stdout/result
     if (index == n) {
-        return (bucket_sum[0] == target_sum && bucket_sum[1] == target_sum && bucket_sum[2] == target_sum);
+        // Check if all buckets are full
+        for (int i = 0; i < k_partitions; ++i) {
+            if (bucket_sum[i] != target_sum)
+                return false;
+        }
+        return true;
     }
 
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < k_partitions; i++) {
         if (bucket_sum[i] + numbers[index] > target_sum) {
             continue;
         }
@@ -45,36 +49,44 @@ bool backtrack(int index) {
     return false;
 }
 
-void solve(int input_n, int *input_numbers) {
+void solve(int input_n, int *input_numbers, int k) {
     n = input_n;
+    k_partitions = k;
     numbers = new int[n];
     std::copy(input_numbers, input_numbers + n, numbers);
 
     bucket_id = new int[n];
+    bucket_sum = new int[k_partitions];
 
     long long total_sum = 0;
     for (int i = 0; i < n; ++i)
         total_sum += numbers[i];
 
-    if (total_sum % 3 != 0) {
+    if (total_sum % k_partitions != 0) {
         std::cout << "no" << std::endl;
         delete[] numbers;
         delete[] bucket_id;
+        delete[] bucket_sum;
         return;
     }
 
-    target_sum = total_sum / 3;
-    bucket_sum[0] = bucket_sum[1] = bucket_sum[2] = 0;
+    target_sum = total_sum / k_partitions;
+    for (int i = 0; i < k_partitions; ++i)
+        bucket_sum[i] = 0;
     count = 0;
 
     std::sort(numbers, numbers + n, compare);
 
     if (backtrack(0)) {
         std::cout << "yes" << std::endl;
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < k_partitions; i++) {
+            bool first = true;
             for (int j = 0; j < n; j++) {
                 if (bucket_id[j] == i) {
-                    std::cout << numbers[j] << " ";
+                    if (!first)
+                        std::cout << " ";
+                    std::cout << numbers[j];
+                    first = false;
                 }
             }
             std::cout << std::endl;
@@ -85,5 +97,6 @@ void solve(int input_n, int *input_numbers) {
 
     delete[] numbers;
     delete[] bucket_id;
+    delete[] bucket_sum;
 }
 } // namespace BacktrackingNoPrune

@@ -1,60 +1,60 @@
 #!/bin/bash
 
-# --- Configuration ---
-START_N=3
-END_N=40
+# --- 配置 ---
+START_N=12
+END_N=18
 STEP_N=1
-TRIALS=10
+TRIALS=5
 MAX_VAL=1000
 
-# Stop limits (N > limit will skip the algorithm)
-STOP_BT=40
-STOP_MASK=1
-STOP_DIMEN=1
-STOP_BT_NOPRUNE=40
+# 停止限制 (N > limit 将跳过该算法)
+STOP_BT=100
+STOP_MASK=31
+STOP_DIMEN=25
+STOP_BT_NOPRUNE=16
 # ---------------------
 
 SAVE_FILES=false
 
-# Parse arguments: only -f is supported to enable file saving
+# 解析参数: 仅支持 -f 以启用文件保存
 while getopts "f" opt; do
     case "$opt" in
         f) SAVE_FILES=true ;;
-        *) echo "Usage: $0 [-f] (to save files)" >&2; exit 1 ;;
+        *) echo "用法: $0 [-f] (保存文件)" >&2; exit 1 ;;
     esac
 done
 
-# Build project
-echo "Building project..."
-if [ ! -d "build" ]; then
-    mkdir build
+# 构建项目
+echo "正在构建项目..."
+if [ ! -d "../build" ]; then
+    mkdir ../build
 fi
-cd build
+cd ../build
 cmake .. > /dev/null
 make > /dev/null
 if [ $? -ne 0 ]; then
-    echo "Build failed!"
+    echo "构建失败!"
     exit 1
 fi
-cd ..
+cd ../test
 
-# Create testcases directory if needed
+# 如果需要，创建测试用例目录
 if [ "$SAVE_FILES" = true ]; then
-    mkdir -p ../testcases
+    mkdir -p ../../testcases
 fi
 
-# Initialize results file
-RESULTS_FILE="results.csv"
+# 初始化结果文件
+RESULTS_FILE="results_n.csv"
 # echo "N,Type,Algorithm,AvgTime" > $RESULTS_FILE
 
-echo "Starting tests..."
-echo "Range: $START_N - $END_N, Step: $STEP_N, Trials: $TRIALS, MaxVal: $MAX_VAL"
+echo "开始测试 (变化 N, 固定 K=3)..."
+echo "范围: $START_N - $END_N, 步长: $STEP_N, 次数: $TRIALS, 最大值: $MAX_VAL"
 
 for (( n=$START_N; n<=$END_N; n+=$STEP_N )); do
     echo "--------------------------------------------------"
-    echo "Testing N = $n"
+    echo "测试 N = $n"
     
-    # Determine which algorithms to run
+    # 确定运行哪些算法
     RUN_BT=1
     if [ $n -gt $STOP_BT ]; then RUN_BT=0; fi
     
@@ -67,9 +67,9 @@ for (( n=$START_N; n<=$END_N; n+=$STEP_N )); do
     RUN_BT_NOPRUNE=1
     if [ $n -gt $STOP_BT_NOPRUNE ]; then RUN_BT_NOPRUNE=0; fi
 
-    echo "  Active: BT=$RUN_BT, Mask=$RUN_MASK, Dimen=$RUN_DIMEN, BT_NoPrune=$RUN_BT_NOPRUNE"
+    echo "  激活状态: BT=$RUN_BT, Mask=$RUN_MASK, Dimen=$RUN_DIMEN, BT_NoPrune=$RUN_BT_NOPRUNE"
     
-    # Initialize sums
+    # 初始化总和
     sum_divisible_bt=0
     sum_divisible_dp=0
     sum_divisible_dimen=0
@@ -86,11 +86,11 @@ for (( n=$START_N; n<=$END_N; n+=$STEP_N )); do
     sum_yes_noprune=0
 
     for (( i=1; i<=$TRIALS; i++ )); do
-        echo "  Trial $i/$TRIALS..."
+        echo "  第 $i/$TRIALS 次试验..."
 
-        # --- 1. Random Divisible Case ---
-        python3 generator.py $n $MAX_VAL 2 > temp_input.txt
-        ./build/Test $RUN_BT $RUN_MASK $RUN_DIMEN $RUN_BT_NOPRUNE < temp_input.txt > temp_output.txt
+        # --- 1. 随机可整除情况 ---
+        python3 ./generator.py $n $MAX_VAL 2 3 > temp_input.txt
+        ../build/Test $RUN_BT $RUN_MASK $RUN_DIMEN $RUN_BT_NOPRUNE 3 < temp_input.txt > temp_output.txt
         
         times=($(grep "Time:" temp_output.txt | awk '{print $2}'))
         time_bt=${times[0]}
@@ -104,13 +104,13 @@ for (( n=$START_N; n<=$END_N; n+=$STEP_N )); do
         sum_divisible_noprune=$(awk "BEGIN {print $sum_divisible_noprune + $time_noprune}")
         
         if [ "$SAVE_FILES" = true ]; then
-            cp temp_input.txt "../testcases/input_${n}_${i}_divisible.in"
-            cp temp_output.txt "../testcases/output_${n}_${i}_divisible.out"
+            cp temp_input.txt "../../testcases/input_${n}_${i}_divisible.in"
+            cp temp_output.txt "../../testcases/output_${n}_${i}_divisible.out"
         fi
 
-        # --- 2. Near Miss Case ---
-        python3 generator.py $n $MAX_VAL 3 > temp_input.txt
-        ./build/Test $RUN_BT $RUN_MASK $RUN_DIMEN $RUN_BT_NOPRUNE < temp_input.txt > temp_output.txt
+        # --- 2. 差一点情况 (Near Miss) ---
+        python3 ./generator.py $n $MAX_VAL 3 3 > temp_input.txt
+        ../build/Test $RUN_BT $RUN_MASK $RUN_DIMEN $RUN_BT_NOPRUNE 3 < temp_input.txt > temp_output.txt
         
         times=($(grep "Time:" temp_output.txt | awk '{print $2}'))
         time_bt=${times[0]}
@@ -124,13 +124,13 @@ for (( n=$START_N; n<=$END_N; n+=$STEP_N )); do
         sum_nearmiss_noprune=$(awk "BEGIN {print $sum_nearmiss_noprune + $time_noprune}")
         
         if [ "$SAVE_FILES" = true ]; then
-            cp temp_input.txt "../testcases/input_${n}_${i}_nearmiss.in"
-            cp temp_output.txt "../testcases/output_${n}_${i}_nearmiss.out"
+            cp temp_input.txt "../../testcases/input_${n}_${i}_nearmiss.in"
+            cp temp_output.txt "../../testcases/output_${n}_${i}_nearmiss.out"
         fi
 
-        # --- 3. Yes Case ---
-        python3 generator.py $n $MAX_VAL 1 > temp_input.txt
-        ./build/Test $RUN_BT $RUN_MASK $RUN_DIMEN $RUN_BT_NOPRUNE < temp_input.txt > temp_output.txt
+        # --- 3. 肯定有解情况 (Yes Case) ---
+        python3 ./generator.py $n $MAX_VAL 1 3 > temp_input.txt
+        ../build/Test $RUN_BT $RUN_MASK $RUN_DIMEN $RUN_BT_NOPRUNE 3 < temp_input.txt > temp_output.txt
         
         times=($(grep "Time:" temp_output.txt | awk '{print $2}'))
         time_bt=${times[0]}
@@ -144,12 +144,12 @@ for (( n=$START_N; n<=$END_N; n+=$STEP_N )); do
         sum_yes_noprune=$(awk "BEGIN {print $sum_yes_noprune + $time_noprune}")
 
         if [ "$SAVE_FILES" = true ]; then
-            cp temp_input.txt "../testcases/input_${n}_${i}_yes.in"
-            cp temp_output.txt "../testcases/output_${n}_${i}_yes.out"
+            cp temp_input.txt "../../testcases/input_${n}_${i}_yes.in"
+            cp temp_output.txt "../../testcases/output_${n}_${i}_yes.out"
         fi
     done
 
-    # Calculate averages
+    # 计算平均值
     avg_divisible_bt=$(awk "BEGIN {print $sum_divisible_bt / $TRIALS}")
     avg_divisible_dp=$(awk "BEGIN {print $sum_divisible_dp / $TRIALS}")
     avg_divisible_dimen=$(awk "BEGIN {print $sum_divisible_dimen / $TRIALS}")
@@ -165,7 +165,7 @@ for (( n=$START_N; n<=$END_N; n+=$STEP_N )); do
     avg_yes_dimen=$(awk "BEGIN {print $sum_yes_dimen / $TRIALS}")
     avg_yes_noprune=$(awk "BEGIN {print $sum_yes_noprune / $TRIALS}")
 
-    # Save to CSV
+    # 保存到 CSV
     echo "$n,RandomDivisible,Backtracking,$avg_divisible_bt" >> $RESULTS_FILE
     echo "$n,RandomDivisible,BitmaskDP,$avg_divisible_dp" >> $RESULTS_FILE
     echo "$n,RandomDivisible,DimenDP,$avg_divisible_dimen" >> $RESULTS_FILE
@@ -181,19 +181,19 @@ for (( n=$START_N; n<=$END_N; n+=$STEP_N )); do
     echo "$n,Yes,DimenDP,$avg_yes_dimen" >> $RESULTS_FILE
     echo "$n,Yes,BacktrackingNoPrune,$avg_yes_noprune" >> $RESULTS_FILE
 
-    # Print summary
-    echo "  [Average Results]"
-    echo "    RandomDivisible: BT=${avg_divisible_bt}s, DP=${avg_divisible_dp}s, Dimen=${avg_divisible_dimen}s, BT_NoPrune=${avg_divisible_noprune}s"
-    echo "    NearMiss:        BT=${avg_nearmiss_bt}s, DP=${avg_nearmiss_dp}s, Dimen=${avg_nearmiss_dimen}s, BT_NoPrune=${avg_nearmiss_noprune}s"
-    echo "    Yes:             BT=${avg_yes_bt}s, DP=${avg_yes_dp}s, Dimen=${avg_yes_dimen}s, BT_NoPrune=${avg_yes_noprune}s"
+    # 打印摘要
+    echo "  [平均结果]"
+    echo "    随机可整除: BT=${avg_divisible_bt}s, DP=${avg_divisible_dp}s, Dimen=${avg_divisible_dimen}s, BT_NoPrune=${avg_divisible_noprune}s"
+    echo "    差一点:     BT=${avg_nearmiss_bt}s, DP=${avg_nearmiss_dp}s, Dimen=${avg_nearmiss_dimen}s, BT_NoPrune=${avg_nearmiss_noprune}s"
+    echo "    肯定有解:   BT=${avg_yes_bt}s, DP=${avg_yes_dp}s, Dimen=${avg_yes_dimen}s, BT_NoPrune=${avg_yes_noprune}s"
 done
 
-# Cleanup
+# 清理
 rm -f temp_input.txt temp_output.txt
 
-# Generate plots
-echo "Generating plots..."
-python3 plot_results.py
+# 生成图表
+echo "正在生成图表..."
+python3 plot_n.py
 
 echo "--------------------------------------------------"
-echo "Done. Results saved to $RESULTS_FILE and plots to ../documents/"
+echo "完成。结果已保存至 $RESULTS_FILE，图表已保存至 ../../documents/"

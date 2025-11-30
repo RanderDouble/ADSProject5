@@ -5,47 +5,42 @@ def generate_random_case(n, max_val):
     numbers = [random.randint(1, max_val) for _ in range(n)]
     return numbers
 
-def generate_random_divisible_case(n, max_val):
+def generate_random_divisible_case(n, max_val, k=3):
     numbers = [random.randint(1, max_val) for _ in range(n)]
     total_sum = sum(numbers)
-    remainder = total_sum % 3
+    remainder = total_sum % k
     
     if remainder != 0:
-        # Adjust one number to make sum divisible by 3
-        # We want (total_sum - numbers[i] + new_val) % 3 == 0
-        # => new_val % 3 == (numbers[i] - total_sum) % 3
-        # Simplest way: subtract remainder from a number.
-        # If number becomes <= 0, add 3.
-        
+        # Adjust one number to make sum divisible by k
         idx = random.randint(0, n - 1)
         numbers[idx] -= remainder
         while numbers[idx] < 1:
-            numbers[idx] += 3
+            numbers[idx] += k
             
     return numbers
 
-def generate_yes_case(n, max_val):
-    if n < 3: n = 3
+def generate_yes_case(n, max_val, k=3):
+    if n < k: n = k
     
     low_bound = n
     high_bound = n * max_val
     if low_bound > high_bound: low_bound = high_bound
     
-    target_sum = random.randint(low_bound, high_bound) // 3
-    max_bucket_size = (n + 2) // 3
+    target_sum = random.randint(low_bound, high_bound) // k
+    max_bucket_size = (n + k - 1) // k
     if target_sum < max_bucket_size:
         target_sum = max_bucket_size
 
     all_numbers = []
     
-    for i in range(3):
+    for i in range(k):
         current_sum = 0
-        count = n // 3 
-        if i == 2: count = n - len(all_numbers)
+        count = n // k 
+        if i == k - 1: count = n - len(all_numbers)
         
         bucket_nums = []
-        for k in range(count - 1):
-            nums_left_after = count - 1 - k
+        for _ in range(count - 1):
+            nums_left_after = count - 1 - len(bucket_nums)
             upper_bound = target_sum - current_sum - nums_left_after
             limit = min(max_val, upper_bound)
             if limit < 1: limit = 1
@@ -63,9 +58,9 @@ def generate_yes_case(n, max_val):
     random.shuffle(all_numbers)
     return all_numbers
 
-def generate_near_miss_case(n, max_val):
+def generate_near_miss_case(n, max_val, k=3):
     # Start with a valid Yes case
-    nums = generate_yes_case(n, max_val)
+    nums = generate_yes_case(n, max_val, k)
     
     # Perturb it: +1 to one, -1 to another to keep sum constant
     # but break the specific constructed solution
@@ -83,19 +78,20 @@ def generate_near_miss_case(n, max_val):
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
-        print("Usage: python3 generator.py <N> <MaxVal> [Mode: 0=Random, 1=Yes, 2=Divisible, 3=NearMiss]", file=sys.stderr)
+        print("Usage: python3 generator.py <N> <MaxVal> [Mode] [K]", file=sys.stderr)
         sys.exit(1)
 
     n = int(sys.argv[1])
     max_val = int(sys.argv[2])
     mode = int(sys.argv[3]) if len(sys.argv) > 3 else 0
+    k = int(sys.argv[4]) if len(sys.argv) > 4 else 3
 
     if mode == 1:
-        nums = generate_yes_case(n, max_val)
+        nums = generate_yes_case(n, max_val, k)
     elif mode == 2:
-        nums = generate_random_divisible_case(n, max_val)
+        nums = generate_random_divisible_case(n, max_val, k)
     elif mode == 3:
-        nums = generate_near_miss_case(n, max_val)
+        nums = generate_near_miss_case(n, max_val, k)
     else:
         nums = generate_random_case(n, max_val)
 
