@@ -24,14 +24,14 @@ int main() {
     Backtracking::solve(n, nums);
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_bt = end - start;
-    std::cout << "Time: " << std::fixed << std::setprecision(4) << elapsed_bt.count() << " s" << std::endl;
+    std::cout << "Time: " << std::fixed << std::setprecision(9) << elapsed_bt.count() << " s" << std::endl;
 
     std::cout << "\n--- Bitmask DP ---" << std::endl;
     start = std::chrono::high_resolution_clock::now();
     BitmaskDP::solve(n, nums);
     end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_dp = end - start;
-    std::cout << "Time: " << std::fixed << std::setprecision(4) << elapsed_dp.count() << " s" << std::endl;
+    std::cout << "Time: " << std::fixed << std::setprecision(9) << elapsed_dp.count() << " s" << std::endl;
 
     delete[] nums;
     return 0;
