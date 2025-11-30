@@ -12,6 +12,9 @@
 namespace Backtracking {
 void solve(int n, int* nums);
 } // namespace Backtracking
+namespace BacktrackingNoPrune {
+void solve(int n, int* nums);
+} // namespace BacktrackingNoPrune
 namespace BitmaskDP {
 void solve(int n, int* nums);
 } // namespace BitmaskDP
@@ -124,11 +127,18 @@ int main(int argc, char* argv[]) {
     bool run_bt = true;
     bool run_mask = true;
     bool run_dimen = true;
+    bool run_bt_noprune = true;
 
-    if (argc >= 4) {
+    if (argc >= 5) {
         run_bt = std::stoi(argv[1]);
         run_mask = std::stoi(argv[2]);
         run_dimen = std::stoi(argv[3]);
+        run_bt_noprune = std::stoi(argv[4]);
+    } else if (argc >= 4) {
+        run_bt = std::stoi(argv[1]);
+        run_mask = std::stoi(argv[2]);
+        run_dimen = std::stoi(argv[3]);
+        run_bt_noprune = false; // Default to false if not provided
     }
 
     int n;
@@ -142,25 +152,32 @@ int main(int argc, char* argv[]) {
     std::string r1 = run_test("Backtracking", Backtracking::solve, n, nums, run_bt);
     std::string r2 = run_test("Bitmask DP", BitmaskDP::solve, n, nums, run_mask);
     std::string r3 = run_test("Dimen DP", DimenDP::solve, n, nums, run_dimen);
+    std::string r4 = run_test("Backtracking (No Prune)", BacktrackingNoPrune::solve, n, nums, run_bt_noprune);
 
     std::vector<std::pair<std::string, std::string>> results;
-    if (run_bt) results.push_back({"BT", r1});
-    if (run_mask) results.push_back({"DP", r2});
-    if (run_dimen) results.push_back({"Dimen", r3});
+    if (run_bt)
+        results.push_back({"BT", r1});
+    if (run_mask)
+        results.push_back({"DP", r2});
+    if (run_dimen)
+        results.push_back({"Dimen", r3});
+    if (run_bt_noprune)
+        results.push_back({"BT_NoPrune", r4});
 
     if (results.size() > 1) {
         bool consistent = true;
         std::string first_res = results[0].second;
-        for(size_t i=1; i<results.size(); ++i) {
+        for (size_t i = 1; i < results.size(); ++i) {
             if (results[i].second != first_res) {
                 consistent = false;
                 break;
             }
         }
-        
+
         if (!consistent) {
             std::cerr << "!!! INCONSISTENT RESULTS !!!" << std::endl;
-            for(auto& p : results) std::cerr << p.first << ": " << p.second << ", ";
+            for (auto& p : results)
+                std::cerr << p.first << ": " << p.second << ", ";
             std::cerr << std::endl;
         }
     }

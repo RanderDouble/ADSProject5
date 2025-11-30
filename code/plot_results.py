@@ -16,7 +16,7 @@ except FileNotFoundError:
 
 # Set up the figure with 2x3 subplots
 fig, axes = plt.subplots(2, 3, figsize=(18, 12))
-fig.suptitle('Performance Analysis: Backtracking vs Bitmask DP vs Dimen DP', fontsize=16)
+fig.suptitle('Performance Analysis: Backtracking (Pruned vs NoPrune) vs DP', fontsize=16)
 
 # Helper function to plot data
 def plot_algo_comparison(ax, data, title, ylabel="Time (s)"):
