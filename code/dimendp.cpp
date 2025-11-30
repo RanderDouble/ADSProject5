@@ -85,7 +85,7 @@ void solve(int n, int* input_numbers, int k) {
             }
             // otherwise,must have come from subset 3
             else {
-                partitions[2][par_3++]=val;
+                partitions[2][part_3++]=val;
             }
         }
         //print the result

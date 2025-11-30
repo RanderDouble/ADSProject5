@@ -1,16 +1,16 @@
 #!/bin/bash
 
 # --- 配置 ---
-START_N=12
-END_N=18
+START_N=3
+END_N=25
 STEP_N=1
 TRIALS=5
-MAX_VAL=100
+MAX_VAL=10
 
 # 停止限制 (N > limit 将跳过该算法)
 STOP_BT=100
-STOP_MASK=31
-STOP_DIMEN=25
+STOP_MASK=25
+STOP_DIMEN=50
 # ---------------------
 
 SAVE_FILES=false
@@ -44,7 +44,7 @@ fi
 
 # 初始化结果文件
 RESULTS_FILE="results_n.csv"
-# echo "N,Type,Algorithm,AvgTime" > $RESULTS_FILE
+echo "N,Type,Algorithm,AvgTime" > $RESULTS_FILE
 
 echo "开始测试 (变化 N, 固定 K=3)..."
 echo "范围: $START_N - $END_N, 步长: $STEP_N, 次数: $TRIALS, 最大值: $MAX_VAL"
