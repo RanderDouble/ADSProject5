@@ -11,7 +11,6 @@ def generate_random_divisible_case(n, max_val, k=3):
     remainder = total_sum % k
     
     if remainder != 0:
-        # Adjust one number to make sum divisible by k
         idx = random.randint(0, n - 1)
         numbers[idx] -= remainder
         while numbers[idx] < 1:

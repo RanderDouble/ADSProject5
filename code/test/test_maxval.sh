@@ -10,7 +10,7 @@ TRIALS=1
 
 SAVE_FILES=false
 
-# 解析参数: 仅支持 -f 以启用文件保存
+# 解析参数: 支持 -f 以启用文件保存
 while getopts "f" opt; do
     case "$opt" in
         f) SAVE_FILES=true ;;

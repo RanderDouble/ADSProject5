@@ -35,15 +35,12 @@ void run_test(const std::string& name, std::function<void(int, int*, int)> func,
     std::cout << std::endl;
 }
 
+// ./Test run_bt run_mask run_dimen [k]
 int main(int argc, char* argv[]) {
     bool run_bt = true;
     bool run_mask = true;
     bool run_dimen = true;
     int k = 3;
-
-    // New argument format: ./Test run_bt run_mask run_dimen [k]
-    // Old format was: ./Test run_bt run_mask run_dimen run_noprune [k]
-    // We need to adapt to the new format.
 
     if (argc >= 5) {
         run_bt = std::stoi(argv[1]);

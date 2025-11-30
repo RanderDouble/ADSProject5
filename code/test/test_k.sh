@@ -9,17 +9,13 @@ TRIALS=10
 MAX_VAL=1000
 
 # 停止限制 (K > limit 将跳过该算法)
-# 对于 K，通常较大的 K 对 BT 来说更容易？还是更难？
-# 对于 MaskDP，复杂度是 O(K * 3^N)，所以是 K 的线性关系。
-# 对于 BT，这取决于具体情况。
-# 我们就在这个小范围内全部运行。
 STOP_BT=100
 STOP_MASK=100
 # ---------------------
 
 SAVE_FILES=false
 
-# 解析参数: 仅支持 -f 以启用文件保存
+# 解析参数: 支持 -f 以启用文件保存
 while getopts "f" opt; do
     case "$opt" in
         f) SAVE_FILES=true ;;
@@ -92,9 +88,6 @@ for (( k=$START_K; k<=$END_K; k+=$STEP_K )); do
         times=($(grep "Time:" temp_output.txt | awk '{print $2}'))
         time_bt=${times[0]}
         time_dp=${times[1]}
-        # DimenDP 被跳过 (索引 2 是 -1.0 或在输出中被跳过？等一下，如果我为 RUN_DIMEN 传递 0，它会打印 Time: -1.0 吗？
-        # 让我们检查 test.cpp 逻辑。如果 run_dimen 为 false，它打印 -1.0。
-        # 所以 times[2] 是 Dimen (-1.0)。
         
         sum_divisible_bt=$(awk "BEGIN {print $sum_divisible_bt + $time_bt}")
         sum_divisible_dp=$(awk "BEGIN {print $sum_divisible_dp + $time_dp}")
