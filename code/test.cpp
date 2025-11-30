@@ -9,9 +9,6 @@
 namespace Backtracking {
 void solve(int n, int* nums, int k);
 } // namespace Backtracking
-namespace BacktrackingNoPrune {
-void solve(int n, int* nums, int k);
-} // namespace BacktrackingNoPrune
 namespace BitmaskDP {
 void solve(int n, int* nums, int k);
 } // namespace BitmaskDP
@@ -42,25 +39,21 @@ int main(int argc, char* argv[]) {
     bool run_bt = true;
     bool run_mask = true;
     bool run_dimen = true;
-    bool run_bt_noprune = true;
     int k = 3;
 
-    if (argc >= 6) {
+    // New argument format: ./Test run_bt run_mask run_dimen [k]
+    // Old format was: ./Test run_bt run_mask run_dimen run_noprune [k]
+    // We need to adapt to the new format.
+
+    if (argc >= 5) {
         run_bt = std::stoi(argv[1]);
         run_mask = std::stoi(argv[2]);
         run_dimen = std::stoi(argv[3]);
-        run_bt_noprune = std::stoi(argv[4]);
-        k = std::stoi(argv[5]);
-    } else if (argc >= 5) {
-        run_bt = std::stoi(argv[1]);
-        run_mask = std::stoi(argv[2]);
-        run_dimen = std::stoi(argv[3]);
-        run_bt_noprune = std::stoi(argv[4]);
+        k = std::stoi(argv[4]);
     } else if (argc >= 4) {
         run_bt = std::stoi(argv[1]);
         run_mask = std::stoi(argv[2]);
         run_dimen = std::stoi(argv[3]);
-        run_bt_noprune = false;
     }
 
     int n;
@@ -74,7 +67,6 @@ int main(int argc, char* argv[]) {
     run_test("Backtracking", Backtracking::solve, n, nums, k, run_bt);
     run_test("Bitmask DP", BitmaskDP::solve, n, nums, k, run_mask);
     run_test("Dimen DP", DimenDP::solve, n, nums, k, run_dimen);
-    run_test("Backtracking (No Prune)", BacktrackingNoPrune::solve, n, nums, k, run_bt_noprune);
 
     delete[] nums;
     return 0;

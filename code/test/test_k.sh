@@ -15,7 +15,6 @@ MAX_VAL=1000
 # 我们就在这个小范围内全部运行。
 STOP_BT=100
 STOP_MASK=100
-STOP_BT_NOPRUNE=100
 # ---------------------
 
 SAVE_FILES=false
@@ -74,38 +73,31 @@ for (( k=$START_K; k<=$END_K; k+=$STEP_K )); do
     # DimenDP 仅支持 K=3，因此在此通用 K 测试中禁用它
     RUN_DIMEN=0
 
-    RUN_BT_NOPRUNE=1
-    if [ $k -gt $STOP_BT_NOPRUNE ]; then RUN_BT_NOPRUNE=0; fi
-
-    echo "  激活状态: BT=$RUN_BT, Mask=$RUN_MASK, Dimen=$RUN_DIMEN, BT_NoPrune=$RUN_BT_NOPRUNE"
+    echo "  激活状态: BT=$RUN_BT, Mask=$RUN_MASK, Dimen=$RUN_DIMEN"
     
     # 初始化总和
     sum_divisible_bt=0
     sum_divisible_dp=0
-    sum_divisible_noprune=0
     
     sum_yes_bt=0
     sum_yes_dp=0
-    sum_yes_noprune=0
 
     for (( i=1; i<=$TRIALS; i++ )); do
         echo "  第 $i/$TRIALS 次试验..."
 
         # --- 1. 随机可整除情况 ---
         python3 ./generator.py $FIXED_N $MAX_VAL 2 $k > temp_input.txt
-        ../build/Test $RUN_BT $RUN_MASK $RUN_DIMEN $RUN_BT_NOPRUNE $k < temp_input.txt > temp_output.txt
+        ../build/Test $RUN_BT $RUN_MASK $RUN_DIMEN $k < temp_input.txt > temp_output.txt
         
         times=($(grep "Time:" temp_output.txt | awk '{print $2}'))
         time_bt=${times[0]}
         time_dp=${times[1]}
         # DimenDP 被跳过 (索引 2 是 -1.0 或在输出中被跳过？等一下，如果我为 RUN_DIMEN 传递 0，它会打印 Time: -1.0 吗？
         # 让我们检查 test.cpp 逻辑。如果 run_dimen 为 false，它打印 -1.0。
-        # 所以 times[2] 是 Dimen (-1.0)。times[3] 是 BT_NoPrune。
-        time_noprune=${times[3]}
+        # 所以 times[2] 是 Dimen (-1.0)。
         
         sum_divisible_bt=$(awk "BEGIN {print $sum_divisible_bt + $time_bt}")
         sum_divisible_dp=$(awk "BEGIN {print $sum_divisible_dp + $time_dp}")
-        sum_divisible_noprune=$(awk "BEGIN {print $sum_divisible_noprune + $time_noprune}")
         
         if [ "$SAVE_FILES" = true ]; then
             cp temp_input.txt "../../testcases/input_k${k}_${i}_divisible.in"
@@ -114,16 +106,14 @@ for (( k=$START_K; k<=$END_K; k+=$STEP_K )); do
 
         # --- 2. 肯定有解情况 (Yes Case) ---
         python3 ./generator.py $FIXED_N $MAX_VAL 1 $k > temp_input.txt
-        ../build/Test $RUN_BT $RUN_MASK $RUN_DIMEN $RUN_BT_NOPRUNE $k < temp_input.txt > temp_output.txt
+        ../build/Test $RUN_BT $RUN_MASK $RUN_DIMEN $k < temp_input.txt > temp_output.txt
         
         times=($(grep "Time:" temp_output.txt | awk '{print $2}'))
         time_bt=${times[0]}
         time_dp=${times[1]}
-        time_noprune=${times[3]}
         
         sum_yes_bt=$(awk "BEGIN {print $sum_yes_bt + $time_bt}")
         sum_yes_dp=$(awk "BEGIN {print $sum_yes_dp + $time_dp}")
-        sum_yes_noprune=$(awk "BEGIN {print $sum_yes_noprune + $time_noprune}")
 
         if [ "$SAVE_FILES" = true ]; then
             cp temp_input.txt "../../testcases/input_k${k}_${i}_yes.in"
@@ -134,25 +124,21 @@ for (( k=$START_K; k<=$END_K; k+=$STEP_K )); do
     # 计算平均值
     avg_divisible_bt=$(awk "BEGIN {print $sum_divisible_bt / $TRIALS}")
     avg_divisible_dp=$(awk "BEGIN {print $sum_divisible_dp / $TRIALS}")
-    avg_divisible_noprune=$(awk "BEGIN {print $sum_divisible_noprune / $TRIALS}")
     
     avg_yes_bt=$(awk "BEGIN {print $sum_yes_bt / $TRIALS}")
     avg_yes_dp=$(awk "BEGIN {print $sum_yes_dp / $TRIALS}")
-    avg_yes_noprune=$(awk "BEGIN {print $sum_yes_noprune / $TRIALS}")
 
     # 保存到 CSV
     echo "$k,RandomDivisible,Backtracking,$avg_divisible_bt" >> $RESULTS_FILE
     echo "$k,RandomDivisible,BitmaskDP,$avg_divisible_dp" >> $RESULTS_FILE
-    echo "$k,RandomDivisible,BacktrackingNoPrune,$avg_divisible_noprune" >> $RESULTS_FILE
     
     echo "$k,Yes,Backtracking,$avg_yes_bt" >> $RESULTS_FILE
     echo "$k,Yes,BitmaskDP,$avg_yes_dp" >> $RESULTS_FILE
-    echo "$k,Yes,BacktrackingNoPrune,$avg_yes_noprune" >> $RESULTS_FILE
 
     # 打印摘要
     echo "  [平均结果]"
-    echo "    随机可整除: BT=${avg_divisible_bt}s, DP=${avg_divisible_dp}s, BT_NoPrune=${avg_divisible_noprune}s"
-    echo "    肯定有解:   BT=${avg_yes_bt}s, DP=${avg_yes_dp}s, BT_NoPrune=${avg_yes_noprune}s"
+    echo "    随机可整除: BT=${avg_divisible_bt}s, DP=${avg_divisible_dp}s"
+    echo "    肯定有解:   BT=${avg_yes_bt}s, DP=${avg_yes_dp}s"
 done
 
 # 清理

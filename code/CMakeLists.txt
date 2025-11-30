@@ -3,4 +3,4 @@ project(PartitionProblem)
 
 set(CMAKE_CXX_STANDARD 11)
 
-add_executable(Test test.cpp bt.cpp maskdp.cpp dimendp.cpp bt_noprune.cpp)
+add_executable(Test test.cpp bt.cpp maskdp.cpp dimendp.cpp)
