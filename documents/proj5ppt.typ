@@ -44,37 +44,36 @@ Valid Partition: $\{1, 9\}, \{4, 6\}, \{2, 3, 5\}$.
 To prove it is NP-Hard, we show that if we can solve 3-Partition, we can solve the known NP-Complete *2-Partition Problem*(can be reduced to *subset problem*).
 
 1. *Reduction Strategy*:
-   - *Given*: An instance of 2-Partition (Set $A$, total sum $2M$).
-   - *Goal*: Determine if $A$ can be split into two subsets of sum $M$.
-   - *Construction*: Create a new set $A' = A union \{M\}$.
-     - Total sum of $A'$ is $3M$. Target for 3-Partition is $M$.
+  - *Given*: An instance of 2-Partition (Set $A$, total sum $2M$).
+  - *Goal*: Determine if $A$ can be split into two subsets of sum $M$.
+  - *Construction*: Create a new set $A' = A union \{M\}$.
+    - Total sum of $A'$ is $3M$. Target for 3-Partition is $M$.
 
 2. *Equivalence*:
-   - ($arrow.r$) If $A$ has a 2-partition ($A_1, A_2$), then $\{A_1, A_2, \{M\}\}$ is a valid 3-partition of $A'$.
-   - ($arrow.l$) If $A'$ has a 3-partition, one subset *must* be $\{M\}$ (since it contains element $M$ and target is $M$, no other positive integers can be added). The remaining two subsets form a 2-partition of $A$.
+  - ($arrow.r$) If $A$ has a 2-partition ($A_1, A_2$), then $\{A_1, A_2, \{M\}\}$ is a valid 3-partition of $A'$.
+  - ($arrow.l$) If $A'$ has a 3-partition, one subset *must* be $\{M\}$ (since it contains element $M$ and target is $M$, no other positive integers can be added). The remaining two subsets form a 2-partition of $A$.
 
 *Conclusion*: 3-Partition is at least as hard as 2-Partition.
 
 = 3-Dimension Dynamic Programming
 
-== Core Idea: State Compression
+== Core Idea
 
 *Judge First, then Find Solution*:
-Use 3D DP to determine if solution exists,then reconstruct actual partit
-ion.
+Use 3D DP to determine if solution exists,then reconstruct actual partition.
 
 *DP*:
 
-*State Definition*:bool dp[i][j][k] represents first k numbers ,which first subset with sum=i,and another subset with sum=j .
+*State Definition*:bool dp[i][j][k] represents first k numbers, which first subset with sum=i, and another subset with sum=j .
 
-`dp[i][j][k] = 
+`dp[i][j][k] =
     dp[i][j][k-1] OR                 // Put in third subset
-    (i>=x && dp[i-x][j][k-1]) OR    // Put in first subset 
-    (j>=x && dp[i][j-x][k-1])       // Put in second subset`
+    (i>=x && dp[i-x][j][k-1]) OR     // Put in first subset
+    (j>=x && dp[i][j-x][k-1])        // Put in second subset`
 
-*Reconstruct*:Choose the last number, check which subset keeps the state is true
+*Reconstruct*: Choose the last number, check which subset keeps the state is true
 
-== Key Implementation (Bitmask)
+== Key Implementation
 
 #block(
   fill: luma(245),
@@ -85,19 +84,20 @@ ion.
     ```pseudo
     Function DP(dp[][][], num[],n,target):
       dp[0][0][0]=1;
-      for(k=1;k<=n;k++){
-        dp[0][0][z]=1,x=num[z-1];
-        for(i=0;i<=target;i++)
-          for(j=0;j<=target;j++){
+      for(k=1;k<=n;k++) {
+        dp[0][0][k]=1,x=num[k-1];
+        for(i=0;i<=target;i++) {
+          for(j=0;j<=target;j++) {
             if(dp[i][j][k-1]) dp[i][j][k]=1; //subset3
             else if(i>=x && dp[i-x][j][k-1]) dp[i][j][k]=1;//subset1
             else if(j>=x && dp[i][j-x][k-1]) dp[i][j][k]=1;//subset2
           }
+        }
       }
       if(dp[target][target][n]) return true;
-    
-    
-    
+
+
+
       while(n>0){
       //subset3
         if(dp[i][j][n]) part3.push(num[n-1]);
@@ -112,13 +112,13 @@ ion.
   ],
 )
 
-== Performance & Stability
+== Performance
 
-*Time Complexity: O(n*target^2)*
-- We iterate 𝑁 times,each time we fill dp[i][j] from (0,0) to (target,target).
+*Time Complexity: $O(n times t a r g e t^2)$*
+- We iterate 𝑁 times, each time we fill dp[i][j] from (0,0) to (target,target).
 - it is pseudo-polynomial time complexity.
 
-*Space Complexity: O(n*target^2)*
+*Space Complexity: $O(n times t a r g e t^2)$*
 - The space of dp Array.
 
 = Bucket-Centric Backtracking
@@ -150,25 +150,25 @@ The logic focuses on filling one bucket at a time. Once a bucket is full (`curre
     Function Backtrack(k, current_sum, start_index):
         // Optimization 1: Last bucket is automatic
         IF k == 1: Mark remaining as Bucket 1; RETURN TRUE
-        
+
         // Bucket filled, reset to fill next bucket
-        IF current_sum == target: 
+        IF current_sum == target:
             RETURN Backtrack(k - 1, 0, 0)
-    
+
         FOR i FROM start_index TO N:
             IF used[i]: CONTINUE
             IF current_sum + numbers[i] > target: CONTINUE
-            
+
             // Pruning: Skip duplicates to avoid symmetry
             IF i > start AND numbers[i] == numbers[i-1] AND !used[i-1]: CONTINUE
-    
+
             used[i] = TRUE
             IF Backtrack(k, current_sum + numbers[i], i + 1): RETURN TRUE
             used[i] = FALSE // Backtrack step
-    
+
             // Pruning: Largest available item failed in empty bucket
             IF current_sum == 0: RETURN FALSE
-            
+
         RETURN FALSE
     ```
   ],
@@ -178,16 +178,16 @@ The logic focuses on filling one bucket at a time. Once a bucket is full (`curre
 
 #columns(2)[
   *Complexity Analysis*
-  
+
   - *Time Complexity*:
     Roughly $O(K \cdot 2^{N})$. By isolating one bucket at a time, the problem size ($N$) effectively decreases for subsequent buckets, though worst-case remains exponential.
   - *Space Complexity*:
     $O(N)$. Requires linear space for the recursion stack and the auxiliary `used` and `bucket_id` arrays.
-  
+
   #colbreak()
-  
+
   *Generalization to K-Partition*
-  
+
   - *Algorithm Validity*:
     The bucket-centric logic is the standard solution for the "Partition to K Equal Sum Subsets" problem.
   - *Implementation Changes*:
@@ -228,15 +228,15 @@ We reduced the state space from standard $N \cdot 2^N$ to just $2^N$ using mathe
 
 #columns(2)[
   *Time Complexity*
-  
+
   - *Analysis*: $O(N \cdot 2^N)$.
   - *Independence from K*:
     Unlike backtracking, the complexity depends purely on $N$. Increasing the number of partitions ($K$) does *not* increase the search depth significantly.
-  
+
   #colbreak()
-  
+
   *Space Complexity (The Bottleneck)*
-  
+
   - *Memory Usage*: $O(2^N)$.
   - *Constraint*:
     - The `memo` array grows exponentially.
