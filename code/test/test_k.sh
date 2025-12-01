@@ -1,16 +1,16 @@
 #!/bin/bash
 
 # --- 配置 ---
-FIXED_N=120
-START_K=38
-END_K=41
-STEP_K=2
+FIXED_N=20
+START_K=2
+END_K=20
+STEP_K=1
 TRIALS=50
 MAX_VAL=100
 
 # 停止限制 (K > limit 将跳过该算法)
 STOP_BT=100
-STOP_MASK=1
+STOP_MASK=100
 # ---------------------
 
 SAVE_FILES=false

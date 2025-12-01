@@ -16,7 +16,7 @@ except FileNotFoundError:
 
 # 设置 1x3 子图: RandomDivisible, NearMiss, Yes
 fig, axes = plt.subplots(1, 3, figsize=(18, 5))
-fig.suptitle('Performance Analysis: Varying K (Fixed N=120)', fontsize=16)
+fig.suptitle('Performance Analysis: Varying K (Fixed N=20)', fontsize=16)
 
 # 绘图辅助函数
 def plot_algo_comparison(ax, data, title, ylabel="Time (s)"):
