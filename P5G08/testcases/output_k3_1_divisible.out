@@ -1,0 +1,18 @@
+--- Backtracking ---
+yes
+Bucket 0: 99 96 95 54 15 
+Bucket 1: 93 80 73 57 49 7 
+Bucket 2: 71 71 49 45 33 31 27 25 7 
+Time: 0.001349297 s
+
+--- Bitmask DP ---
+yes
+31 99 25 95 57 45 7
+71 71 49 15 27 93 33
+96 73 49 80 7 54
+Time: 0.007828572 s
+
+--- Dimen DP ---
+Skipped
+Time: -1.000000000 s
+

@@ -4,7 +4,7 @@
 START_N=3
 END_N=120
 STEP_N=1
-TRIALS=10
+TRIALS=1
 MAX_VAL=10
 
 # 停止限制 (N > limit 将跳过该算法)

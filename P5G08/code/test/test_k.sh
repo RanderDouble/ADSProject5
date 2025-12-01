@@ -5,7 +5,7 @@ FIXED_N=20
 START_K=2
 END_K=20
 STEP_K=1
-TRIALS=50
+TRIALS=1
 MAX_VAL=100
 
 # 停止限制 (K > limit 将跳过该算法)
