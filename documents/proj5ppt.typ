@@ -41,7 +41,7 @@ Valid Partition: $\{1, 9\}, \{4, 6\}, \{2, 3, 5\}$.
 *Theorem*: The 3-Partition Problem is NP-Complete.
 
 *Proof Logic (Reduction)*:
-To prove it is NP-Hard, we show that if we can solve 3-Partition, we can solve the known NP-Complete *2-Partition Problem*(can be reduced to subset problem).
+To prove it is NP-Hard, we show that if we can solve 3-Partition, we can solve the known NP-Complete *2-Partition Problem*(can be reduced to *subset problem*).
 
 1. *Reduction Strategy*:
    - *Given*: An instance of 2-Partition (Set $A$, total sum $2M$).
