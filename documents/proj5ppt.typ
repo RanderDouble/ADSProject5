@@ -1,19 +1,19 @@
-#import "@preview/diatypst:0.7.1": *
+#import "@preview/diatypst:0.8.0": *
 
 // 使用 example.typ 中的 "slides.with" 结构进行初始化
 #show: slides.with(
   // 基础内容配置 (来自 report.typ 和 example.typ)
-  title: "Projects 3: Recover the Design",
+  title: "Projects 5: Three Partition Problem",
   subtitle: "Advanced Data Structure and Algorithm",
-  date: "2025.11.03",
-  authors: "", // "author" 字段在 report.typ 中为空
+  date: "2025.12.01",
+  authors: "林润铎，窦宇浩，张钊", // "author" 字段在 report.typ 中为空
 
   // 风格化选项 (来自 example.typ)
   title-color: blue.darken(50%), // 选用模板示例颜色
   ratio: 16 / 9, // 使用更现代的 16:9 比例
   layout: "medium",
   toc: true, // 自动生成目录
-  count: "dot", // 页面角标使用点
+  count: "dot-section", // 页面角标使用点
   footer: true,
 )
 
@@ -21,60 +21,181 @@
 // 幻灯片内容开始
 // ===================================
 
+= Problem Definition
 
+== The 3-Partition Problem
 
-= Chapter 1: Algorithm Design - Backtracking
+*Input*:
+A multiset of $N$ positive integers $S = \{a_1, a_2, dots, a_n\}$.
 
-== Core Idea: Sequential Bucket Filling
+*Output*:
+Decide whether $S$ can be partitioned into three disjoint subsets $S_1, S_2, S_3$ such that:
+$ sum_(x in S_1) x = sum_(x in S_2) x = sum_(x in S_3) x = (sum_(x in S) x) / 3 $
 
-*Naive Approach vs. Our Strategy*:
-Instead of trying to decide which bucket an item belongs to (which leads to $K^N$ states), we invert the decision process.
+*Example*:
+Given $S = \{1, 2, 3, 4, 5, 6, 9\}$, Sum = 30, Target = 10.
+Valid Partition: $\{1, 9\}, \{4, 6\}, \{2, 3, 5\}$.
 
-*Sequential Filling*:
-We attempt to completely fill one bucket to the `target_sum` before moving on to the next.
+== NP-Completeness Proof
 
-#quote[
-  The algorithm focuses on filling the $k$-th bucket using available numbers. Only when `current_bucket_sum == target_sum` do we proceed to bucket $k-1$.
-]
+*Theorem*: The 3-Partition Problem is NP-Complete.
 
-*Heuristic Optimization*:
-- The input array is sorted in descending order.
-- *Rationale*: We prioritize placing larger numbers. They are harder to fit, allowing the algorithm to "fail fast" and prune invalid branches early in the recursion tree.
+*Proof Logic (Reduction)*:
+To prove it is NP-Hard, we show that if we can solve 3-Partition, we can solve the known NP-Complete *2-Partition Problem*(can be reduced to subset problem).
 
-== Pruning Strategies (Constraint & Symmetry)
+1. *Reduction Strategy*:
+   - *Given*: An instance of 2-Partition (Set $A$, total sum $2M$).
+   - *Goal*: Determine if $A$ can be split into two subsets of sum $M$.
+   - *Construction*: Create a new set $A' = A union \{M\}$.
+     - Total sum of $A'$ is $3M$. Target for 3-Partition is $M$.
 
-To transform the exponential search into an efficient solver, we apply three strict pruning rules:
+2. *Equivalence*:
+   - ($arrow.r$) If $A$ has a 2-partition ($A_1, A_2$), then $\{A_1, A_2, \{M\}\}$ is a valid 3-partition of $A'$.
+   - ($arrow.l$) If $A'$ has a 3-partition, one subset *must* be $\{M\}$ (since it contains element $M$ and target is $M$, no other positive integers can be added). The remaining two subsets form a 2-partition of $A$.
 
-+ *Capacity Constraint*:
-  If `current_sum + numbers[i] > target_sum`, skip the number immediately.
-+ *Local Symmetry (Duplicate Pruning)*:
-  If `numbers[i] == numbers[i-1]` and the previous number was skipped (`!used[i-1]`), using the current one would produce an identical state. Skip to avoid redundancy.
-+ *Strong Pruning (Empty Bucket Failure)*:
-  If we fail to fill a *newly opened empty bucket* starting with the largest available number, no solution exists.
-  - *Logic*: The largest remaining number *must* go somewhere. If it cannot start the current bucket, it cannot start any subsequent equivalent bucket.
+*Conclusion*: 3-Partition is at least as hard as 2-Partition.
 
-== Complexity Analysis: Backtracking
+= 3-Dimension Dynamic Programming
+
+== Core Idea: State Compression
+
+*Judge First, then Find Solution*:
+Use 3D DP to determine if solution exists,then reconstruct actual partit
+ion.
+
+*DP*:
+
+*State Definition*:bool dp[i][j][k] represents first k numbers ,which first subset with sum=i,and another subset with sum=j .
+
+`dp[i][j][k] = 
+    dp[i][j][k-1] OR                 // Put in third subset
+    (i>=x && dp[i-x][j][k-1]) OR    // Put in first subset 
+    (j>=x && dp[i][j-x][k-1])       // Put in second subset`
+
+*Reconstruct*:Choose the last number, check which subset keeps the state is true
+
+== Key Implementation (Bitmask)
+
+#block(
+  fill: luma(245),
+  inset: 10pt,
+  radius: 5pt,
+  stroke: luma(200),
+  [
+    ```pseudo
+    Function DP(dp[][][], num[],n,target):
+      dp[0][0][0]=1;
+      for(k=1;k<=n;k++){
+        dp[0][0][z]=1,x=num[z-1];
+        for(i=0;i<=target;i++)
+          for(j=0;j<=target;j++){
+            if(dp[i][j][k-1]) dp[i][j][k]=1; //subset3
+            else if(i>=x && dp[i-x][j][k-1]) dp[i][j][k]=1;//subset1
+            else if(j>=x && dp[i][j-x][k-1]) dp[i][j][k]=1;//subset2
+          }
+      }
+      if(dp[target][target][n]) return true;
+    
+    
+    
+      while(n>0){
+      //subset3
+        if(dp[i][j][n]) part3.push(num[n-1]);
+      //subset1
+        else if(i>=x && dp[i-x][j][n]) part1.push(num[n-1]);
+      //subset2
+        else if(j>=x && dp[i][j-x][n]) part2.push(num[n-1]);
+        n--;
+      }
+      return part1,part2,part3
+    ```
+  ],
+)
+
+== Performance & Stability
+
+*Time Complexity: O(n*target^2)*
+- We iterate 𝑁 times,each time we fill dp[i][j] from (0,0) to (target,target).
+- it is pseudo-polynomial time complexity.
+
+*Space Complexity: O(n*target^2)*
+- The space of dp Array.
+
+= Bucket-Centric Backtracking
+
+== Core Idea: Recursive Subset Construction
+
+*Three Key Optimization Strategies*:
+
+1. *Implicit Final Bucket*:
+  If $K-1$ buckets are successfully filled with the target sum, the remaining unpicked numbers must inevitably sum to the target. We stop recursion at $k=1$, reducing search depth significantly.
+
+2. *Heuristic Sort (Descending)*:
+  Sorting the input array in descending order allows the algorithm to attempt filling buckets with larger numbers first. This reduces the branching factor early in the recursion tree.
+
+3. *State-Based Pruning (Fail-Fast)*:
+  We utilize a `used` array to track element availability. Crucially, if the algorithm fails to fill a new (empty) bucket with the largest available number, it immediately returns `false` (pruning the entire branch), as that number cannot be placed elsewhere.
+
+== Key Implementation (Recursive)
+
+The logic focuses on filling one bucket at a time. Once a bucket is full (`current_sum == target`), it recursively attempts to fill the next bucket.
+
+#block(
+  fill: luma(245),
+  inset: 10pt,
+  radius: 5pt,
+  stroke: luma(200),
+  [
+    ```pseudo
+    Function Backtrack(k, current_sum, start_index):
+        // Optimization 1: Last bucket is automatic
+        IF k == 1: Mark remaining as Bucket 1; RETURN TRUE
+        
+        // Bucket filled, reset to fill next bucket
+        IF current_sum == target: 
+            RETURN Backtrack(k - 1, 0, 0)
+    
+        FOR i FROM start_index TO N:
+            IF used[i]: CONTINUE
+            IF current_sum + numbers[i] > target: CONTINUE
+            
+            // Pruning: Skip duplicates to avoid symmetry
+            IF i > start AND numbers[i] == numbers[i-1] AND !used[i-1]: CONTINUE
+    
+            used[i] = TRUE
+            IF Backtrack(k, current_sum + numbers[i], i + 1): RETURN TRUE
+            used[i] = FALSE // Backtrack step
+    
+            // Pruning: Largest available item failed in empty bucket
+            IF current_sum == 0: RETURN FALSE
+            
+        RETURN FALSE
+    ```
+  ],
+)
+
+== Analysis and Generalization
 
 #columns(2)[
-  *Time Complexity*
-
-  - *Worst-case*: $O(K \cdot 2^N)$.
-  - *Practical Performance*:
-    Due to "Sequential Filling" and aggressive pruning (especially the *Empty Bucket* check), the effective branching factor is drastically reduced.
-  - *Scalability*: Runs instantaneously for $N \le 30$.
-
+  *Complexity Analysis*
+  
+  - *Time Complexity*:
+    Roughly $O(K \cdot 2^{N})$. By isolating one bucket at a time, the problem size ($N$) effectively decreases for subsequent buckets, though worst-case remains exponential.
+  - *Space Complexity*:
+    $O(N)$. Requires linear space for the recursion stack and the auxiliary `used` and `bucket_id` arrays.
+  
   #colbreak()
-
-  *Space Complexity*
-
-  - *Auxiliary Space*: $O(N)$.
-  - *Components*:
-    - `used` array and `bucket_id` array take linear space.
-    - Recursive stack depth is bounded by $N$.
-  - *Advantage*: Very memory efficient compared to DP.
+  
+  *Generalization to K-Partition*
+  
+  - *Algorithm Validity*:
+    The bucket-centric logic is the standard solution for the "Partition to K Equal Sum Subsets" problem.
+  - *Implementation Changes*:
+    - Initial call changes from `backtrack(3, ...)` to `backtrack(K, ...)`.
+    - Total sum validation becomes `total_sum % K == 0`.
 ]
 
-= Chapter 2: Algorithm Design - Bitmask DP
+= Bitmask DP
 
 == Core Idea: State Compression
 
@@ -107,15 +228,15 @@ We reduced the state space from standard $N \cdot 2^N$ to just $2^N$ using mathe
 
 #columns(2)[
   *Time Complexity*
-
+  
   - *Analysis*: $O(N \cdot 2^N)$.
   - *Independence from K*:
     Unlike backtracking, the complexity depends purely on $N$. Increasing the number of partitions ($K$) does *not* increase the search depth significantly.
-
+  
   #colbreak()
-
+  
   *Space Complexity (The Bottleneck)*
-
+  
   - *Memory Usage*: $O(2^N)$.
   - *Constraint*:
     - The `memo` array grows exponentially.
@@ -125,7 +246,7 @@ We reduced the state space from standard $N \cdot 2^N$ to just $2^N$ using mathe
     DP is superior for small $N$ with complex constraints, but fails for large $N$ due to memory limits.
 ]
 
-= Chapter 5: Test
+= Test
 
 == Random sample
 
