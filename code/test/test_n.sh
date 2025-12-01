@@ -2,15 +2,15 @@
 
 # --- 配置 ---
 START_N=3
-END_N=25
+END_N=120
 STEP_N=1
-TRIALS=5
+TRIALS=10
 MAX_VAL=10
 
 # 停止限制 (N > limit 将跳过该算法)
-STOP_BT=100
-STOP_MASK=25
-STOP_DIMEN=50
+STOP_BT=120
+STOP_MASK=30
+STOP_DIMEN=60
 # ---------------------
 
 SAVE_FILES=false

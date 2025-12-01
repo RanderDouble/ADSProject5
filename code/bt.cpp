@@ -11,57 +11,79 @@ namespace Backtracking {
 
 // Global variables for recursion state
 int *numbers;     // Array to store the input numbers
-int *bucket_id;   // Array to track which bucket a number belongs to (for printing)
-int *bucket_sum;  // Current sum of each of the K buckets
+bool *used;       // Array to mark if a number has been used
+int *bucket_id;   // Records which bucket a number belongs to (k = K, K-1, ..., 1)
 int target_sum;   // The target sum for every bucket
 int n;            // Total count of numbers
-int k_partitions; // Number of partitions
+int k_partitions; // Number of partitions (K)
 
 // Comparator for sorting numbers in descending order (Heuristic optimization)
 bool compare(int a, int b) { return a > b; }
 
 /**
  * Recursive Backtracking Function
- * @param index The index of the current number we are trying to place.
+ * Logic Source: bt2.cpp (Sequential filling)
+ * 
+ * @param k Current bucket we are trying to fill (counts down from K to 1)
+ * @param current_bucket_sum Current sum of the bucket k
+ * @param start_index Index to start searching from to avoid duplicates/permutations
  * @return True if a valid partition is found, False otherwise.
  */
-bool backtrack(int index) {
-    // Base Case: All numbers have been successfully placed.
-    // Since we ensure no bucket exceeds target_sum during placement,
-    // and total_sum % K == 0, if we reach here, all buckets must equal target_sum.
-    if (index == n) {
+bool backtrack(int k, int current_bucket_sum, int start_index) {
+    // [Logic from bt2.cpp]: If it is the last bucket (k==1), no need to recurse.
+    // Since the previous (K-1) buckets are filled and the total sum is divisible by K,
+    // the remaining numbers must inevitably sum up to the target.
+    // We just need to mark all unused numbers as belonging to bucket 1.
+    if (k == 1) {
+        for (int i = 0; i < n; i++) {
+            if (!used[i]) {
+                bucket_id[i] = 1; // Assign remaining to the last bucket (logical bucket 1)
+            }
+        }
         return true;
     }
 
-    // Try placing the current number (numbers[index]) into each of the K buckets
-    for (int i = 0; i < k_partitions; i++) {
-        // Pruning 1: Capacity Check
-        // If adding this number exceeds the target sum, this bucket is invalid.
-        if (bucket_sum[i] + numbers[index] > target_sum) {
+    // If the current bucket is full, start filling the next bucket (k-1)
+    // Reset current_sum to 0 and start_index to 0.
+    if (current_bucket_sum == target_sum) {
+        return backtrack(k - 1, 0, 0);
+    }
+
+    for (int i = start_index; i < n; i++) {
+        if (used[i])
+            continue; // Already used by another bucket
+
+        // Pruning 1: Exceeds target sum
+        if (current_bucket_sum + numbers[i] > target_sum)
             continue;
-        }
 
-        // Pruning 2: Symmetry Breaking (Crucial optimization)
-        // If the current bucket has the same sum as the previous bucket,
-        // placing the number here is mathematically equivalent to placing it
-        // in the previous bucket (which was already tried or skipped).
-        // This avoids searching permutations of identical buckets.
-        if (i > 0 && bucket_sum[i] == bucket_sum[i - 1]) {
+        // Pruning 2: Handle duplicates to avoid symmetric searches (Symmetry Breaking)
+        // If current number is the same as the previous one and the previous one
+        // was not used (skipped), then using this one is redundant.
+        if (i > start_index && numbers[i] == numbers[i - 1] && !used[i - 1])
             continue;
-        }
 
-        // Action: Place number in bucket i
-        bucket_sum[i] += numbers[index];
-        bucket_id[index] = i;
+        // --- Action ---
+        used[i] = true;
+        bucket_id[i] = k; // Record: this number belongs to logical bucket k
 
-        // Recurse: Try to place the next number
-        if (backtrack(index + 1)) {
+        // --- Recurse ---
+        if (backtrack(k, current_bucket_sum + numbers[i], i + 1)) {
             return true;
         }
 
-        // Backtrack: Remove number from bucket i and try the next bucket
-        bucket_sum[i] -= numbers[index];
-        bucket_id[index] = -1;
+        // --- Backtrack (Undo selection) ---
+        used[i] = false;
+        bucket_id[i] = 0; // Clear record
+
+        // Pruning 3 (Strong Pruning from bt2.cpp):
+        // If we fail to fill the bucket even when picking the first available number
+        // (which is the largest available due to sorting), then no solution exists
+        // for this configuration. This is because this largest number MUST belong
+        // to some bucket, and if it can't fit in the current empty bucket,
+        // it won't fit anywhere else equivalent.
+        if (current_bucket_sum == 0)
+            return false;
     }
 
     return false;
@@ -77,12 +99,15 @@ void solve(int input_n, int *input_numbers, int k) {
     n = input_n;
     k_partitions = k;
 
-    // Copy input to internal array
+    // Allocate memory
     numbers = new int[n];
     std::copy(input_numbers, input_numbers + n, numbers);
 
+    used = new bool[n];
+    std::fill(used, used + n, false);
+
     bucket_id = new int[n];
-    bucket_sum = new int[k_partitions];
+    std::fill(bucket_id, bucket_id + n, 0);
 
     // Calculate total sum
     long long total_sum = 0;
@@ -93,53 +118,53 @@ void solve(int input_n, int *input_numbers, int k) {
     if (total_sum % k_partitions != 0) {
         std::cout << "no" << std::endl;
         delete[] numbers;
+        delete[] used;
         delete[] bucket_id;
-        delete[] bucket_sum;
         return;
     }
 
     target_sum = total_sum / k_partitions;
 
-    // Reset bucket sums
-    for (int i = 0; i < k_partitions; ++i) {
-        bucket_sum[i] = 0;
-    }
-
     // Optimization: Sort numbers in descending order.
-    // Placing larger numbers first reduces the branching factor early in the tree.
     std::sort(numbers, numbers + n, compare);
 
     // Immediate failure check: If the largest number is greater than the target, impossible.
     if (n > 0 && numbers[0] > target_sum) {
         std::cout << "no" << std::endl;
         delete[] numbers;
+        delete[] used;
         delete[] bucket_id;
-        delete[] bucket_sum;
         return;
     }
 
-    // Start recursion
-    if (backtrack(0)) {
+    // Start recursion: Try to fill K buckets sequentially.
+    // We start from k = K down to 1.
+    if (backtrack(k_partitions, 0, 0)) {
         std::cout << "yes" << std::endl;
-        for (int i = 0; i < k_partitions; i++) {
-            bool first = true;
-            for (int j = 0; j < n; j++) {
-                if (bucket_id[j] == i) {
-                    if (!first)
-                        std::cout << " ";
-                    std::cout << numbers[j];
-                    first = false;
+
+        // --- Printing Result ---
+        // Iterate to print buckets.
+        // The algorithm fills logical buckets K, K-1, ..., 1.
+        // To match btk.cpp output style (Bucket 0, Bucket 1...), we map:
+        // Logical bucket K -> Display Bucket 0
+        // Logical bucket K-1 -> Display Bucket 1
+        for (int k = k_partitions; k >= 1; k--) {
+            std::cout << "Bucket " << (k_partitions - k) << ": ";
+            for (int i = 0; i < n; i++) {
+                if (bucket_id[i] == k) {
+                    std::cout << numbers[i] << " ";
                 }
             }
             std::cout << std::endl;
         }
+
     } else {
         std::cout << "no" << std::endl;
     }
 
     // Clean up dynamic memory
     delete[] numbers;
+    delete[] used;
     delete[] bucket_id;
-    delete[] bucket_sum;
 }
 } // namespace Backtracking
