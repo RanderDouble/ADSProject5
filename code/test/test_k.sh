@@ -1,16 +1,16 @@
 #!/bin/bash
 
 # --- 配置 ---
-FIXED_N=20
-START_K=2
-END_K=10
-STEP_K=1
-TRIALS=10
-MAX_VAL=1000
+FIXED_N=120
+START_K=38
+END_K=41
+STEP_K=2
+TRIALS=50
+MAX_VAL=100
 
 # 停止限制 (K > limit 将跳过该算法)
 STOP_BT=100
-STOP_MASK=100
+STOP_MASK=1
 # ---------------------
 
 SAVE_FILES=false
@@ -44,7 +44,7 @@ fi
 
 # 初始化结果文件
 RESULTS_FILE="results_k.csv"
-echo "K,Type,Algorithm,AvgTime" > $RESULTS_FILE
+# echo "K,Type,Algorithm,AvgTime" > $RESULTS_FILE
 
 echo "开始测试 (固定 N=$FIXED_N, 变化 K)..."
 echo "范围: K=$START_K - $END_K, 步长: $STEP_K, 次数: $TRIALS, 最大值: $MAX_VAL"
@@ -75,6 +75,9 @@ for (( k=$START_K; k<=$END_K; k+=$STEP_K )); do
     sum_divisible_bt=0
     sum_divisible_dp=0
     
+    sum_nearmiss_bt=0
+    sum_nearmiss_dp=0
+
     sum_yes_bt=0
     sum_yes_dp=0
 
@@ -97,7 +100,23 @@ for (( k=$START_K; k<=$END_K; k+=$STEP_K )); do
             cp temp_output.txt "../../testcases/output_k${k}_${i}_divisible.out"
         fi
 
-        # --- 2. 肯定有解情况 (Yes Case) ---
+        # --- 2. 差一点情况 (Near Miss) ---
+        python3 ./generator.py $FIXED_N $MAX_VAL 3 $k > temp_input.txt
+        ../build/Test $RUN_BT $RUN_MASK $RUN_DIMEN $k < temp_input.txt > temp_output.txt
+        
+        times=($(grep "Time:" temp_output.txt | awk '{print $2}'))
+        time_bt=${times[0]}
+        time_dp=${times[1]}
+        
+        sum_nearmiss_bt=$(awk "BEGIN {print $sum_nearmiss_bt + $time_bt}")
+        sum_nearmiss_dp=$(awk "BEGIN {print $sum_nearmiss_dp + $time_dp}")
+        
+        if [ "$SAVE_FILES" = true ]; then
+            cp temp_input.txt "../../testcases/input_k${k}_${i}_nearmiss.in"
+            cp temp_output.txt "../../testcases/output_k${k}_${i}_nearmiss.out"
+        fi
+
+        # --- 3. 肯定有解情况 (Yes Case) ---
         python3 ./generator.py $FIXED_N $MAX_VAL 1 $k > temp_input.txt
         ../build/Test $RUN_BT $RUN_MASK $RUN_DIMEN $k < temp_input.txt > temp_output.txt
         
@@ -118,6 +137,9 @@ for (( k=$START_K; k<=$END_K; k+=$STEP_K )); do
     avg_divisible_bt=$(awk "BEGIN {print $sum_divisible_bt / $TRIALS}")
     avg_divisible_dp=$(awk "BEGIN {print $sum_divisible_dp / $TRIALS}")
     
+    avg_nearmiss_bt=$(awk "BEGIN {print $sum_nearmiss_bt / $TRIALS}")
+    avg_nearmiss_dp=$(awk "BEGIN {print $sum_nearmiss_dp / $TRIALS}")
+
     avg_yes_bt=$(awk "BEGIN {print $sum_yes_bt / $TRIALS}")
     avg_yes_dp=$(awk "BEGIN {print $sum_yes_dp / $TRIALS}")
 
@@ -125,12 +147,16 @@ for (( k=$START_K; k<=$END_K; k+=$STEP_K )); do
     echo "$k,RandomDivisible,Backtracking,$avg_divisible_bt" >> $RESULTS_FILE
     echo "$k,RandomDivisible,BitmaskDP,$avg_divisible_dp" >> $RESULTS_FILE
     
+    echo "$k,NearMiss,Backtracking,$avg_nearmiss_bt" >> $RESULTS_FILE
+    echo "$k,NearMiss,BitmaskDP,$avg_nearmiss_dp" >> $RESULTS_FILE
+
     echo "$k,Yes,Backtracking,$avg_yes_bt" >> $RESULTS_FILE
     echo "$k,Yes,BitmaskDP,$avg_yes_dp" >> $RESULTS_FILE
 
     # 打印摘要
     echo "  [平均结果]"
     echo "    随机可整除: BT=${avg_divisible_bt}s, DP=${avg_divisible_dp}s"
+    echo "    差一点:     BT=${avg_nearmiss_bt}s, DP=${avg_nearmiss_dp}s"
     echo "    肯定有解:   BT=${avg_yes_bt}s, DP=${avg_yes_dp}s"
 done
 

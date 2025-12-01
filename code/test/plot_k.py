@@ -14,9 +14,9 @@ except FileNotFoundError:
     print("错误: 未找到 results_k.csv。请先运行 test_k.sh。")
     exit(1)
 
-# 设置 1x2 子图 (因为我们只有 2 种情况: RandomDivisible 和 Yes)
-fig, axes = plt.subplots(1, 2, figsize=(14, 6))
-fig.suptitle('Performance Analysis: Varying K (Fixed N=15)', fontsize=16)
+# 设置 1x3 子图: RandomDivisible, NearMiss, Yes
+fig, axes = plt.subplots(1, 3, figsize=(18, 5))
+fig.suptitle('Performance Analysis: Varying K (Fixed N=20)', fontsize=16)
 
 # 绘图辅助函数
 def plot_algo_comparison(ax, data, title, ylabel="Time (s)"):
@@ -37,11 +37,15 @@ def plot_algo_comparison(ax, data, title, ylabel="Time (s)"):
 
 # 1. 随机可整除情况
 divisible_data = df[df['Type'] == 'RandomDivisible']
-plot_algo_comparison(axes[0], divisible_data, 'Random Divisible Case: Comparison')
+plot_algo_comparison(axes[0], divisible_data, 'Random Divisible Case')
 
-# 2. 肯定有解情况 (Yes Case)
+# 2. 差一点情况 (Near Miss)
+nearmiss_data = df[df['Type'] == 'NearMiss']
+plot_algo_comparison(axes[1], nearmiss_data, 'Near Miss Case')
+
+# 3. 肯定有解情况 (Yes Case)
 yes_data = df[df['Type'] == 'Yes']
-plot_algo_comparison(axes[1], yes_data, 'Yes Case: Comparison')
+plot_algo_comparison(axes[2], yes_data, 'Yes Case')
 
 # 调整布局并保存
 plt.tight_layout(rect=[0, 0.03, 1, 0.95])
@@ -50,13 +54,19 @@ plt.savefig(output_path)
 print(f"图表已保存至 {output_path}")
 
 # 保存单独的图表
+
 plt.figure(figsize=(8, 6))
-plot_algo_comparison(plt.gca(), divisible_data, 'Random Divisible Case: Comparison (Varying K)')
+plot_algo_comparison(plt.gca(), divisible_data, 'Random Divisible Case (Varying K)')
 plt.savefig(os.path.join(output_dir, "random_divisible_comparison_k.png"))
 plt.close()
 
 plt.figure(figsize=(8, 6))
-plot_algo_comparison(plt.gca(), yes_data, 'Yes Case: Comparison (Varying K)')
+plot_algo_comparison(plt.gca(), nearmiss_data, 'Near Miss Case (Varying K)')
+plt.savefig(os.path.join(output_dir, "nearmiss_comparison_k.png"))
+plt.close()
+
+plt.figure(figsize=(8, 6))
+plot_algo_comparison(plt.gca(), yes_data, 'Yes Case (Varying K)')
 plt.savefig(os.path.join(output_dir, "yes_comparison_k.png"))
 plt.close()
 
