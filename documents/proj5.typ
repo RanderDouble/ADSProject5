@@ -392,7 +392,7 @@ At first, we tested our code on purely random samples. However, since the probab
 
 From the analysis below, we can found that the time complexity is depended on N, the number of numbers first. Then Three-dimensional dp algorithm basen on the target sum. In the bonus part, we should also test if k affects the time complexity of bitmask dp and backtrack algorithm.
 
-=== N
+=== N value
 
 #figure(image("./full3/performance_analysis.png"), caption: "Time vs N")
 
@@ -404,7 +404,7 @@ The experimental results strongly align with our theoretical analysis in previou
   The results are perfectly consistent with the theoretical complexity of $O(N dot 2^N)$ derived in Chapter 3. As seen in the graph, the runtime explodes exponentially once $N$ exceeds 20. This confirms that the state space size ($2^N$) is the dominant factor, making this approach strictly limited to small $N$, regardless of the values of the numbers.
 
 + 3D DP:
-  The results are consistent with the analysis $O(N dot "target"^2)$ in Chapter 4. In this test, we fixed `max_val=20`, but as $N$ increases, the total sum (and thus the `target`) grows linearly with $N$ ($"target" approx N dot "avg" / 3$). Substituting this into the complexity formula yields $O(N dot N^2) = O(N^3)$. The graph reflects this polynomial growth, showing that 3D DP scales much better than Bitmask DP for this specific constraint (small numbers, large $N$).
+  The results are consistent with the analysis $O(N dot "target"^2)$ in Chapter 4. In this test, we fixed `max_val=100`, but as $N$ increases, the total sum (and thus the `target`) grows linearly with $N$ ($"target" approx N dot "avg" / 3$). Substituting this into the complexity formula yields $O(N dot N^2) = O(N^3)$. The graph reflects this polynomial growth, showing that 3D DP scales much better than Bitmask DP for this specific constraint (small numbers, large $N$).
 
 + Backtracking:
   The results might seem inconsistent with the theoretical *worst-case* complexity of $O(K^N)$ (exponential), as the curve remains flat and extremely low. However, this validates our "Actual Performance" analysis in Chapter 2. These pruning strategies and ordered filling drastically reduce the effective search space in practice. For $N$ up to 120, the runtime of the program demonstrates that real-world performance can be orders of magnitude better than worst-case theoretical bounds due to problem structure and optimizations.
@@ -440,4 +440,4 @@ And then we removed test for Bitmask and then keep N=120 and max_val=20, then ch
 
 #figure(image("./k3/performance_analysis_k.png"), caption: "Time vs K, N=120")
 
-For Backtracking show in this figure, the complexity is theoretically $O(K times 2^N)$ (assigning each of N items to one of K buckets), which means for k, this is an algorithm of polynomial time. However, as K increases, the runtime does not explode as strictly as $K^N$ would suggest. This aligns with our analysis in Chapter 2.
+For Backtracking show in this figure, the complexity is theoretically $O(K^N)$ (assigning each of N items to one of K buckets), which means for k, this is an algorithm of polynomial time. However, as K increases, the runtime does not explode as strictly as $K^N$ would suggest. This aligns with our analysis in Chapter 2.
